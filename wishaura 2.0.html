@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WishAura - AI Gift Recommender</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .hero-section {
+            position: relative;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: #FBE0D2;
+            max-width: 800px;
+            padding: 0 20px;
+        }
+
+        .hero-title {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.2s both;
+        }
+
+        .cta-button {
+            background: linear-gradient(45deg, #f98484, #e78967);
+            color: #DDB398;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(238, 90, 36, 0.3);
+            animation: fadeInUp 1s ease-out 0.4s both;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(238, 90, 36, 0.4);
+        }
+
+        .main-content {
+            display: none;
+            min-height: 100vh;
+            background: #F8C5AD;
+            padding: 2rem 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: #FFCBBC #976d53;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .input-section {
+            background: #f9e3cb;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .description-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #996a4c;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .description-input:focus {
+            outline: none;
+            border-color: #f0ac8d ;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .interests-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .interests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 0.5rem;
+        }
+
+        .interest-chip {
+            background: #f3f4f6;
+            border: 2px solid #e5e7eb;
+            padding: 8px 15px;
+            border-radius: 25px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .interest-chip:hover {
+            background: #e5e7eb;
+        }
+
+        .interest-chip.selected {
+            background: #f0ac8d ;
+            color: white;
+            border-color: #f6a088;
+        }
+
+        .budget-section {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .budget-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            min-width: 100px;
+        }
+
+        .generate-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .persona-profile {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .gifts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .gift-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+        }
+
+        .gift-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .gift-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+
+        .gift-price {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        .gift-reasoning {
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .gift-links {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .gift-link {
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .gift-link:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+
+        .mood-board {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .mood-board-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .mood-image {
+            width: 100%;
+            height: 150px;
+            background: #f3f4f6;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #9ca3af;
+            font-size: 0.9rem;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .digital-card {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .reset-btn {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #4b5563;
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .floating-particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+
+        .emoji-indicator {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+
+            .gifts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .budget-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-section" id="heroSection">
+        <canvas class="hero-bg" id="heroCanvas"></canvas>
+        <div class="floating-particles" id="particles"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">🎁 WishAura</h1>
+            <p class="hero-subtitle">Find the perfect gift with AI-powered personalization</p>
+            <button class="cta-button" onclick="showMainApp()">Start Finding Gifts ✨</button>
+        </div>
+    </section>
+
+    <!-- Main Application -->
+    <section class="main-content" id="mainContent">
+        <div class="container">
+            <div class="app-header">
+                <h1 class="app-title">🎁 WishAura</h1>
+                <p>Describe your person, and let AI find the perfect gift!</p>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage"></div>
+
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="form-group">
+                    <label class="form-label">Tell us about the person and occasion:</label>
+                    <textarea 
+                        class="description-input" 
+                        id="personDescription"
+                        placeholder="Example: It's my best friend's 21st birthday, she loves books, coffee, and anime, we've been friends since school..."
+                    ></textarea>
+                </div>
+
+                <div class="form-group interests-section">
+                    <label class="form-label">Select additional interests (optional):</label>
+                    <div class="interests-grid" id="interestsGrid"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Budget Range:</label>
+                    <div class="budget-section">
+                        <input type="number" class="budget-input" id="minBudget" placeholder="Min ₹500" min="100">
+                        <span>to</span>
+                        <input type="number" class="budget-input" id="maxBudget" placeholder="Max ₹10000" min="100">
+                    </div>
+                </div>
+
+                <button class="generate-btn" id="generateBtn" onclick="generateGifts()">
+                    Generate AI Recommendations 🎯
+                </button>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading" id="loadingSection">
+                <div class="loading-spinner"></div>
+                <p>AI is analyzing the personality and finding perfect gifts...</p>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection">
+                <!-- Personality Profile -->
+                <div class="persona-profile" id="personaProfile">
+                    <h2>🧠 AI Personality Analysis</h2>
+                    <div id="personalityContent"></div>
+                </div>
+
+                <!-- Gift Recommendations -->
+                <div class="gifts-grid" id="giftsGrid"></div>
+
+                <!-- Mood Board -->
+                <div class="mood-board">
+                    <h2>🎨 Gift Inspiration Mood Board</h2>
+                    <div class="mood-board-grid" id="moodBoardGrid"></div>
+                </div>
+
+                <!-- Digital Greeting Card -->
+                <div class="digital-card" id="digitalCard">
+                    <h2>💌 AI-Generated Greeting Card</h2>
+                    <div id="cardContent"></div>
+                </div>
+
+                <button class="reset-btn" onclick="resetApp()">Find More Gifts 🔄</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Predefined interests
+        const commonInterests = [
+            'Books', 'Coffee', 'Anime', 'Gaming', 'Music', 'Art', 'Cooking', 'Travel',
+            'Photography', 'Tech', 'Fitness', 'Fashion', 'Movies', 'Plants', 'Pets',
+            'Sports', 'Dancing', 'Writing', 'Crafting', 'Yoga', 'Wine', 'Board Games'
+        ];
+
+        let selectedInterests = [];
+        let currentGifts = [];
+
+        // Initialize the app
+        function initApp() {
+            createParticles();
+            setupThreeJSBackground();
+            renderInterestsGrid();
+        }
+
+        function showMainApp() {
+            document.getElementById('heroSection').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+
+        // Create floating particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.width = Math.random() * 10 + 5 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+
+        // Three.js background animation
+        function setupThreeJSBackground() {
+            const canvas = document.getElementById('heroCanvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Create floating geometric shapes
+            const geometry = new THREE.SphereGeometry(1, 32, 32);
+            const materials = [
+                new THREE.MeshBasicMaterial({ color: 0xff6b6b, transparent: true, opacity: 0.6 }),
+                new THREE.MeshBasicMaterial({ color: 0x4ecdc4, transparent: true, opacity: 0.6 }),
+                new THREE.MeshBasicMaterial({ color: 0xffe66d, transparent: true, opacity: 0.6 })
+            ];
+            
+            const spheres = [];
+            for (let i = 0; i < 20; i++) {
+                const sphere = new THREE.Mesh(geometry, materials[i % 3]);
+                sphere.position.x = (Math.random() - 0.5) * 20;
+                sphere.position.y = (Math.random() - 0.5) * 20;
+                sphere.position.z = (Math.random() - 0.5) * 20;
+                sphere.scale.setScalar(Math.random() * 0.5 + 0.3);
+                scene.add(sphere);
+                spheres.push(sphere);
+            }
+            
+            camera.position.z = 10;
+            
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                spheres.forEach((sphere, index) => {
+                    sphere.rotation.x += 0.01;
+                    sphere.rotation.y += 0.01;
+                    sphere.position.y += Math.sin(Date.now() * 0.001 + index) * 0.001;
+                });
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+
+        function renderInterestsGrid() {
+            const grid = document.getElementById('interestsGrid');
+            grid.innerHTML = '';
+            
+            commonInterests.forEach(interest => {
+                const chip = document.createElement('div');
+                chip.className = 'interest-chip';
+                chip.textContent = interest;
+                chip.onclick = () => toggleInterest(interest, chip);
+                grid.appendChild(chip);
+            });
+        }
+
+        function toggleInterest(interest, chipElement) {
+            if (selectedInterests.includes(interest)) {
+                selectedInterests = selectedInterests.filter(i => i !== interest);
+                chipElement.classList.remove('selected');
+            } else {
+                selectedInterests.push(interest);
+                chipElement.classList.add('selected');
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Hide error after 5 seconds
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+
+        // Generate gifts using mock data or API
+        async function generateGifts() {
+            const description = document.getElementById('personDescription').value;
+            const minBudget = document.getElementById('minBudget').value || 500;
+            const maxBudget = document.getElementById('maxBudget').value || 10000;
+
+            if (!description.trim()) {
+                showError('Please describe the person first!');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loadingSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('generateBtn').disabled = true;
+
+            try {
+                // Try to use Gemini API if available, otherwise use mock data
+                let results;
+                try {
+                    results = await callGeminiAPI(description, selectedInterests, minBudget, maxBudget);
+                } catch (apiError) {
+                    console.warn('API call failed, using mock data:', apiError);
+                    results = generateMockResults(description, selectedInterests, minBudget, maxBudget);
+                }
+                
+                displayResults(results);
+                
+                // Hide loading
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('resultsSection').style.display = 'block';
+            } catch (error) {
+                console.error('Error generating gifts:', error);
+                showError('Something went wrong. Please try again.');
+                document.getElementById('loadingSection').style.display = 'none';
+            } finally {
+                document.getElementById('generateBtn').disabled = false;
+            }
+        }
+
+        function generateMockResults(description, interests, minBudget, maxBudget) {
+            // Mock AI personality analysis
+            const personality = {
+                ageGroup: "Young Adult (18-25)",
+                primaryTraits: ["Creative", "Social", "Thoughtful"],
+                interests: [...interests, "Books", "Coffee", "Anime"],
+                giftingStyle: "Meaningful and personal gifts that show deep understanding"
+            };
+
+            // Mock gift recommendations
+            const gifts = [
+                {
+                    title: "Custom Anime Art Book",
+                    price: `₹${Math.floor(Math.random() * (maxBudget - minBudget) + parseInt(minBudget))}`,
+                    reasoning: "Perfect for someone who loves anime and books. A custom art book featuring their favorite characters shows you pay attention to their interests.",
+                    category: "Tangible",
+                    links: [
+                        { name: "Amazon", url: "https://www.amazon.in/s?k=custom+anime+art+book" },
+                        { name: "Etsy", url: "https://www.etsy.com/search?q=custom%20anime%20art" }
+                    ]
+                },
+                {
+                    title: "Premium Coffee Subscription",
+                    price: `₹${Math.floor(Math.random() * (maxBudget - minBudget) + parseInt(minBudget))}`,
+                    reasoning: "Since they love coffee, a subscription to artisanal coffee from around the world will be a gift that keeps giving every month.",
+                    category: "Experience",
+                    links: [
+                        { name: "Blue Tokai", url: "https://bluetokaicoffee.com/" },
+                        { name: "Amazon", url: "https://www.amazon.in/s?k=coffee+subscription" }
+                    ]
+                },
+                {
+                    title: "Personalized Friendship Memory Book",
+                    price: `₹${Math.floor(Math.random() * (maxBudget - minBudget) + parseInt(minBudget))}`,
+                    reasoning: "For a long-term friendship, a custom photo book with your memories together would be incredibly meaningful and personal.",
+                    category: "Tangible",
+                    links: [
+                        { name: "Canva", url: "https://www.canva.com/photo-books/" },
+                        { name: "Amazon", url: "https://www.amazon.in/s?k=custom+photo+book" }
+                    ]
+                },
+                {
+                    title: "Digital Spotify Playlist + Custom Cover Art",
+                    price: "₹0-500",
+                    reasoning: "A curated playlist of songs that remind you of your friendship, with custom anime-style cover art, combines their love for music and anime.",
+                    category: "Digital",
+                    links: [
+                        { name: "Spotify", url: "https://open.spotify.com/" },
+                        { name: "Fiverr (Cover Art)", url: "https://www.fiverr.com/search/gigs?query=anime%20art" }
+                    ]
+                }
+            ];
+
+            return { personality, gifts };
+        }
+
+        function displayResults(results) {
+            // Display personality profile
+            const personalityContent = document.getElementById('personalityContent');
+            personalityContent.innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                    <div>
+                        <strong>Age Group:</strong><br>
+                        ${results.personality.ageGroup}
+                    </div>
+                    <div>
+                        <strong>Key Traits:</strong><br>
+                        ${results.personality.primaryTraits.join(', ')}
+                    </div>
+                    <div>
+                        <strong>Core Interests:</strong><br>
+                        ${results.personality.interests.join(', ')}
+                    </div>
+                    <div>
+                        <strong>Gift Style:</strong><br>
+                        ${results.personality.giftingStyle}
+                    </div>
+                </div>
+            `;
+
+            // Display gift recommendations
+            const giftsGrid = document.getElementById('giftsGrid');
+            giftsGrid.innerHTML = '';
+            
+            results.gifts.forEach(gift => {
+                const giftCard = document.createElement('div');
+                giftCard.className = 'gift-card';
+                
+                const categoryEmoji = {
+                    'Tangible': '📦',
+                    'Digital': '💻',
+                    'Experience': '🎪'
+                };
+
+                giftCard.innerHTML = `
+                    <div class="emoji-indicator">${categoryEmoji[gift.category] || '🎁'}</div>
+                    <h3 class="gift-title">${gift.title}</h3>
+                    <div class="gift-price">${gift.price}</div>
+                    <p class="gift-reasoning">${gift.reasoning}</p>
+                    <div class="gift-links">
+                        ${gift.links.map(link => `
+                            <a href="${link.url}" target="_blank" class="gift-link">${link.name}</a>
+                        `).join('')}
+                    </div>
+                `;
+                
+                giftsGrid.appendChild(giftCard);
+            });
+
+            // Generate mood board
+            generateMoodBoard();
+            
+            // Generate digital card
+            generateDigitalCard();
+        }
+
+        function generateMoodBoard() {
+            const moodBoardGrid = document.getElementById('moodBoardGrid');
+            // Using placeholder images from Picsum instead of potentially broken URLs
+            moodBoardGrid.innerHTML = '';
+            
+            for (let i = 0; i < 6; i++) {
+                const moodImage = document.createElement('div');
+                moodImage.className = 'mood-image';
+                moodImage.style.backgroundImage = `url(https://picsum.photos/300/150?random=${i})`;
+                moodImage.style.animationDelay = `${i * 0.1}s`;
+                moodBoardGrid.appendChild(moodImage);
+            }
+        }
+
+        function generateDigitalCard() {
+            const cardContent = document.getElementById('cardContent');
+            cardContent.innerHTML = `
+                <h3 style="color: #d97706; margin-bottom: 1rem;">Happy Birthday! 🎉</h3>
+                <p style="font-size: 1.1rem; color: #92400e; line-height: 1.6;">
+                    "Friendship is the only cement that will ever hold the world together." <br><br>
+                    May your special day be filled with all the joy, laughter, and wonderful surprises you deserve! 
+                    Here's to another year of amazing adventures together! 🎂✨
+                </p>
+                <div style="margin-top: 1.5rem;">
+                    <button style="background: #d97706; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;" onclick="downloadCard()">
+                        Download Card 📥
+                    </button>
+                </div>
+            `;
+        }
+
+        function downloadCard() {
+            alert('Card download feature would be implemented with canvas/PDF generation in the full version!');
+        }
+
+        function resetApp() {
+            document.getElementById('personDescription').value = '';
+            document.getElementById('minBudget').value = '';
+            document.getElementById('maxBudget').value = '';
+            selectedInterests = [];
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'none';
+            renderInterestsGrid();
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Gemini API integration
+        async function callGeminiAPI(description, interests, minBudget, maxBudget) {
+            // In a real implementation, you would use a secure backend to store your API key
+            // This is just a placeholder implementation
+            const API_KEY = 'AIzaSyDR6qJV1zC2c20FNw90VwCkgqq0KW3UX'; 
+            
+            // If no API key is set, throw an error to fall back to mock data
+            
+            
+            
+            try {
+                const prompt = `
+                    Analyze this person: ${description}
+                    Interests: ${interests.join(', ')}
+                    Budget: ₹${minBudget} to ₹${maxBudget}
+                    
+                    Provide a personality analysis and 4 gift recommendations in JSON format:
+                    {
+                        "personality": {
+                            "ageGroup": "string",
+                            "primaryTraits": ["trait1", "trait2", "trait3"],
+                            "interests": ["interest1", "interest2", ...],
+                            "giftingStyle": "string"
+                        },
+                        "gifts": [
+                            {
+                                "title": "string",
+                                "price": "string",
+                                "reasoning": "string",
+                                "category": "Tangible|Digital|Experience",
+                                "links": [
+                                    {"name": "string", "url": "string"},
+                                    {"name": "string", "url": "string"}
+                                ]
+                            }
+                        ]
+                    }
+                `;
+                
+                // This would be the actual API call in a real implementation
+                // For now, we'll simulate an API failure to use mock data
+                throw new Error('API integration not fully implemented');
+                
+            } catch (error) {
+                console.error('Gemini API Error:', error);
+                throw error;
+            }
+        }
+
+        // Initialize the app when the page loads
+        window.onload = initApp;
+    </script>
+</body>
+</html>
